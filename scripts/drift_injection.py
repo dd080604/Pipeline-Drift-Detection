@@ -21,10 +21,10 @@ from pipeline import (
     FeatureEngineer, PredictionStage, DriftDetectionPipeline
 )
 
-with open("artifacts/phase1_artifacts.pkl", "rb") as f:
+with open("/content/drive/MyDrive/Project Phases/Phase 1/phase1_artifacts.pkl", "rb") as f:
     phase1 = pickle.load(f)
 
-with open("artifacts/phase2_artifacts.pkl", "rb") as f:
+with open("/content/drive/MyDrive/Project Phases/Phase 2/phase2_outputs/phase2_artifacts.pkl", "rb") as f:
     phase2 = pickle.load(f)
 
 class BaseDriftInjector(ABC):
