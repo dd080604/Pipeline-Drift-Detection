@@ -501,87 +501,6 @@ def validate_injector(
 
     return divergence_results
 
-def validate_severity_monotonicity(
-    drift_type:    str,
-    dataset_name:  str,
-    reference_df:  pd.DataFrame,
-    severities:    List[float] = None,
-    onset_batch:   int = 0,
-    sim_batch_id:  int = 30,
-    n_rows:        int = 2000,
-):
-    """
-    Verify that increasing severity produces monotonically increasing
-    divergence from the reference distribution.
-
-    Sweeps over a range of severity values and plots KS statistic
-    and JS divergence for each target column.
-    """
-    if severities is None:
-        severities = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
-
-    sample = reference_df.head(n_rows).copy()
-    records = []
-
-    for sev in severities:
-        injector = create_injector(
-            drift_type=drift_type,
-            dataset_name=dataset_name,
-            severity=sev,
-            onset_batch=onset_batch,
-            reference_df=reference_df,
-        )
-
-        drifted = injector(sample.copy(), sim_batch_id)
-
-        for col in injector.target_cols:
-            if col in sample.columns:
-                ref_vals = sample[col].values.astype(float)
-                dri_vals = drifted[col].values.astype(float)
-                div = compute_divergence(ref_vals, dri_vals)
-                records.append({
-                    "severity":     sev,
-                    "feature":      col,
-                    "ks_stat":      div["ks_stat"],
-                    "js_divergence": div["js_divergence"],
-                    "mean_shift":   div["mean_shift"],
-                })
-
-    results_df = pd.DataFrame(records)
-
-    # Plot
-    features = results_df["feature"].unique()
-    metrics = ["ks_stat", "js_divergence"]
-    fig, axes = plt.subplots(1, len(metrics), figsize=(6 * len(metrics), 4))
-
-    for ax, metric in zip(axes, metrics):
-        for feat in features:
-            sub = results_df[results_df["feature"] == feat]
-            ax.plot(sub["severity"], sub[metric], marker="o", label=feat, lw=1.5)
-        ax.set_xlabel("Severity")
-        ax.set_ylabel(metric)
-        ax.set_title(f"{metric} vs severity", fontsize=10)
-        ax.legend(fontsize=8)
-
-    fig.suptitle(
-        f"{dataset_name} — {drift_type} severity monotonicity",
-        fontsize=11, y=1.03,
-    )
-    fig.tight_layout()
-    plt.show()
-
-    # Check monotonicity
-    print(f"\n  Monotonicity check for {drift_type}:")
-    for feat in features:
-        sub = results_df[results_df["feature"] == feat].sort_values("severity")
-        ks_monotonic = all(
-            sub["ks_stat"].iloc[i] <= sub["ks_stat"].iloc[i + 1]
-            for i in range(len(sub) - 1)
-        )
-        print(f"    {feat:30s}  KS monotonic: {'✓' if ks_monotonic else '✗ (minor non-monotonicity is OK for stochastic injectors)'}")
-    print()
-
-    return results_df
 
 elec_ref = phase1["electricity"]["partitions"]["reference"]
 
@@ -611,15 +530,7 @@ for drift_type in DRIFT_REGISTRY:
     )
     cov_injectors[drift_type] = injector
 
-monotonicity_results = {}
-for drift_type in DRIFT_REGISTRY:
-    for ds_name, ds_ref in [("electricity", elec_ref), ("covertype", cov_ref)]:
-        key = f"{ds_name}_{drift_type}"
-        monotonicity_results[key] = validate_severity_monotonicity(
-            drift_type=drift_type,
-            dataset_name=ds_name,
-            reference_df=ds_ref,
-        )
+
 
 def plot_drift_propagation(
     clean_logger,
@@ -689,7 +600,6 @@ phase3_artifacts = {
     "create_injector":       create_injector,         # factory function
     "run_pipeline_with_drift": run_pipeline_with_drift,  # integration fn
     "compute_divergence":    compute_divergence,
-    "monotonicity_results":  monotonicity_results,
     "validation_injectors": {
         "electricity": elec_injectors,
         "covertype":   cov_injectors,
