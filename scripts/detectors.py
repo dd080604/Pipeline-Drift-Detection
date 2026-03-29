@@ -24,7 +24,7 @@ sns.set_style("whitegrid")
 with open("/content/drive/MyDrive/Project Phases/Phase 1/phase1_artifacts.pkl", "rb") as f:
     phase1 = pickle.load(f)
 
-with open("/content/drive/MyDrive/Project Phases/Phase 2/phase2_outputs/phase2_artifacts.pkl", "rb") as f:
+with open("/content/drive/MyDrive/Project Phases/Phase 2/phase2_artifacts.pkl", "rb") as f:
     phase2 = pickle.load(f)
 
 from collections import deque
@@ -1078,7 +1078,7 @@ def null_smoke_test(pipeline, test_df, reference_df, dataset_name, calibrated_pa
     print()
     return first_alarms, monitor
 """
-OUTPUT_DIR = "phase4_outputs"
+OUTPUT_DIR = "/content/drive/MyDrive/Project Phases/Phase 4"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 phase4_artifacts = {
