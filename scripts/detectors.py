@@ -425,6 +425,7 @@ class FeatureMonitor:
 
             # WindowedKS: clear any alarms from warm-up
             ks = self.detectors["WindowedKS"]
+            ks.batch_window.clear()
             ks.alarms.clear()
 
             # PSI: clear any alarms from warm-up
