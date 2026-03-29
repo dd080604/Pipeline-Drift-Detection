@@ -307,71 +307,47 @@ def create_injector(
 def run_pipeline_with_drift(
     pipeline,
     test_df:       pd.DataFrame,
-    injector:      BaseDriftInjector,
+    injector,
     inject_stage:  str = "ingest",
-) -> Tuple[List[pd.DataFrame], "StageLogger"]:
+):
     """
-    Run the Phase 2 pipeline on test data with drift injected at a
-    specific stage.
-
-    This is the core experimental function.  It:
-      1. Streams test data in temporal batches (via the pipeline's ingester)
-      2. At the designated stage, applies the drift injector to the batch
-      3. Logs data at every stage boundary (pre- and post-injection)
-      4. Returns the per-batch results and the populated logger
-
-    Parameters
-    ----------
-    pipeline      : a fitted DriftDetectionPipeline from Phase 2
-    test_df       : the test partition DataFrame
-    injector      : a configured BaseDriftInjector
-    inject_stage  : which stage to inject at: 'ingest', 'clean',
-                    'featurize', or 'predict'
-
-    Returns
-    -------
-    results : list of per-batch predicted DataFrames
-    logger  : StageLogger with full stage-level snapshots
+    Run the pipeline with drift injection.
+ 
+    Updated: uses store_dataframes=True so downstream monitors can
+    access full batch distributions for the KS detector.
     """
     valid_stages = ["ingest", "clean", "featurize", "predict"]
     if inject_stage not in valid_stages:
         raise ValueError(f"inject_stage must be one of {valid_stages}")
-
-    # Use a fresh logger for this trial.
-    # BatchIngester and StageLogger are already in scope from Phase 2 cells.
-    logger = StageLogger(store_dataframes=False)
+ 
+    logger = StageLogger(store_dataframes=True)
     ingester = BatchIngester(test_df, pipeline.batch_size)
     results = []
-
+ 
     for batch_id, raw_batch in ingester:
-
-        # ── Stage 1: Ingest ─────────────────────────────────────────────
+ 
         if inject_stage == "ingest":
             raw_batch = injector(raw_batch, batch_id)
         logger.log(batch_id, "ingest", raw_batch)
-
-        # ── Stage 2: Clean ──────────────────────────────────────────────
+ 
         cleaned = pipeline.cleaner.transform(raw_batch)
         if inject_stage == "clean":
             cleaned = injector(cleaned, batch_id)
         logger.log(batch_id, "clean", cleaned)
-
-        # ── Stage 3: Featurize ──────────────────────────────────────────
+ 
         featured = pipeline.engineer.transform(cleaned)
         if inject_stage == "featurize":
             featured = injector(featured, batch_id)
         logger.log(batch_id, "featurize", featured)
-
-        # ── Stage 4: Predict ────────────────────────────────────────────
+ 
         predicted = pipeline.predictor.predict(featured)
         if inject_stage == "predict":
             predicted = injector(predicted, batch_id)
         logger.log(batch_id, "predict", predicted)
-
+ 
         results.append(predicted)
-
+ 
     return results, logger
-
 def compute_divergence(
     reference_vals: np.ndarray,
     drifted_vals:   np.ndarray,
