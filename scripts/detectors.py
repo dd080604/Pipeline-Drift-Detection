@@ -829,7 +829,7 @@ def calibrate_thresholds(
         "calibrated_params": calibrated_params,
         "statistics":        all_stats,
     }
-
+"""
 elec_pipeline = phase2["electricity"]["pipeline"]
 elec_ref  = phase1["electricity"]["partitions"]["reference"]
 elec_cal  = phase1["electricity"]["partitions"]["calibration"]
@@ -853,7 +853,7 @@ cov_calibration = calibrate_thresholds(
     dataset_name="covertype",
     target_far=0.05,
 )
-
+"""
 def validate_false_alarm_rate(
     pipeline,
     test_df:           pd.DataFrame,
@@ -928,7 +928,7 @@ def validate_false_alarm_rate(
     print()
 
     return far_df
-
+"""
 elec_far = validate_false_alarm_rate(
     pipeline=elec_pipeline,
     test_df=phase1["electricity"]["partitions"]["test"],
@@ -944,7 +944,7 @@ cov_far = validate_false_alarm_rate(
     dataset_name="covertype",
     calibrated_params=cov_calibration["calibrated_params"],
 )
-
+"""
 from drift_injection import create_injector, run_pipeline_with_drift, BaseDriftInjector
 def smoke_test_detection(
     pipeline,
@@ -1076,7 +1076,7 @@ def null_smoke_test(pipeline, test_df, reference_df, dataset_name, calibrated_pa
 
     print()
     return first_alarms, monitor
-
+"""
 OUTPUT_DIR = "phase4_outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -1112,3 +1112,4 @@ phase4_artifacts = {
 save_path = os.path.join(OUTPUT_DIR, "phase4_artifacts.pkl")
 with open(save_path, "wb") as f:
     pickle.dump(phase4_artifacts, f)
+"""
