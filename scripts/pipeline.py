@@ -335,6 +335,7 @@ class PredictionStage:
 
         # Ensure consistent column ordering; fill missing derived features with 0
         X = df.reindex(columns=self.feature_cols, fill_value=0).values
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
 
         out = df.copy()
         out["pred_label"] = self.model.predict(X)
