@@ -164,10 +164,10 @@ class DataCleaner:
                     upper=self.clip_hi[col],
                 )
 
-        # 4. Cast to float32
+        # 4. Cast to float64
         for col in self.numeric_cols:
             if col in out.columns:
-                out[col] = out[col].astype(np.float32)
+                out[col] = out[col].astype(np.float64)
 
         return out
 
