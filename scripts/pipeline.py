@@ -233,6 +233,9 @@ class FeatureEngineer:
         for col in price_cols:
             out[f"vol_{col}"] = out[col].std()
 
+        numeric_cols = out.select_dtypes(include="number").columns
+        out[numeric_cols] = out[numeric_cols].replace([np.inf, -np.inf], np.nan)
+        out[numeric_cols] = out[numeric_cols].fillna(0.0)
         return out
 
     # ── Covertype features ──────────────────────────────────────────────
@@ -276,6 +279,9 @@ class FeatureEngineer:
                 out["Elevation"], q=4, labels=False, duplicates="drop"
             ).astype(float)
 
+        numeric_cols = out.select_dtypes(include="number").columns
+        out[numeric_cols] = out[numeric_cols].replace([np.inf, -np.inf], np.nan)
+        out[numeric_cols] = out[numeric_cols].fillna(0.0)
         return out
 
     def __repr__(self):
